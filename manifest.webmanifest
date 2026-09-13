@@ -1,0 +1,9 @@
+{
+  "name": "Family Yahtzee Scorecard",
+  "short_name": "Yahtzee",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#0f172a",
+  "description": "A simple family Yahtzee scorecard with automatic totals."
+}
