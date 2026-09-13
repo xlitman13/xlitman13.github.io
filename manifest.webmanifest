@@ -1,9 +1,10 @@
 {
-  "name": "Family Yahtzee Scorecard",
-  "short_name": "Yahtzee",
+  "name": "Family Yahtzee Live",
+  "short_name": "Yahtzee Live",
   "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#f8fafc",
-  "theme_color": "#0f172a",
-  "description": "A simple family Yahtzee scorecard with automatic totals."
+  "theme_color": "#111827",
+  "description": "A live shared Yahtzee scorecard for family game night."
 }

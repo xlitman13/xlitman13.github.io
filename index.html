@@ -3,63 +3,90 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#0f172a" />
+  <meta name="theme-color" content="#111827" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>Family Yahtzee Scorecard</title>
-  <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="stylesheet" href="styles.css" />
+  <title>Family Yahtzee Live</title>
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
   <header class="app-header">
-    <div>
-      <p class="eyebrow">Family game night</p>
-      <h1>Yahtzee Scorecard</h1>
-    </div>
-    <button id="newGameBtn" class="secondary-btn" type="button">New game</button>
+    <div><p class="eyebrow">Family game night</p><h1>Yahtzee Live</h1></div>
+    <div id="headerRoom" class="room-pill" hidden></div>
   </header>
 
   <main>
-    <section class="toolbar card" aria-label="Game setup">
-      <div class="toolbar-copy">
-        <strong>Players</strong>
-        <span>Add up to 8 players. Scores save automatically on this device.</span>
-      </div>
-      <button id="addPlayerBtn" class="primary-btn" type="button">+ Add player</button>
+    <section id="setupWarning" class="notice warning" hidden>
+      <strong>Firebase setup needed</strong>
+      <span>Open <code>firebase-config.js</code> and paste your Firebase web app configuration.</span>
     </section>
 
-    <section class="score-wrap card" aria-label="Yahtzee scorecard">
-      <div class="score-scroll">
-        <table id="scoreTable">
-          <thead id="scoreHead"></thead>
-          <tbody id="scoreBody"></tbody>
-        </table>
+    <section id="homeView" class="view">
+      <div class="hero card">
+        <p class="eyebrow dark">Shared scorecard</p>
+        <h2>Everyone scores from their own phone.</h2>
+        <p>Create a room, share the code, and every score updates live.</p>
+        <label class="field"><span>Your name</span><input id="homeName" maxlength="18" autocomplete="name" placeholder="e.g. Dad" /></label>
+        <div class="home-actions">
+          <button id="createRoomBtn" class="primary-btn big-btn" type="button">Create a game</button>
+          <div class="divider"><span>or</span></div>
+          <label class="field"><span>Room code</span><input id="roomCodeInput" maxlength="6" autocapitalize="characters" autocomplete="off" placeholder="ABC234" /></label>
+          <button id="joinRoomBtn" class="secondary-btn big-btn" type="button">Join game</button>
+        </div>
+        <p id="homeError" class="error-text" role="alert"></p>
       </div>
     </section>
 
-    <section class="legend card">
-      <strong>How scoring works</strong>
-      <p>Tap any empty score cell. Upper-section bonus and all totals calculate automatically. Enter <strong>0</strong> to scratch a category.</p>
+    <section id="lobbyView" class="view" hidden>
+      <div class="card lobby-card">
+        <p class="eyebrow dark">Room code</p>
+        <div class="room-code-row">
+          <strong id="lobbyRoomCode" class="room-code">------</strong>
+          <button id="shareRoomBtn" class="secondary-btn" type="button">Share</button>
+        </div>
+        <p>Have everyone open the link or enter this code.</p>
+        <div class="section-heading"><h2>Players</h2><span id="playerCount"></span></div>
+        <div id="lobbyPlayers" class="player-list"></div>
+        <div class="lobby-actions">
+          <button id="leaveLobbyBtn" class="secondary-btn" type="button">Leave room</button>
+          <button id="startGameBtn" class="primary-btn" type="button" hidden>Start game</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="gameView" class="view" hidden>
+      <section class="game-toolbar card">
+        <div><p class="eyebrow dark">Live room</p><strong id="gameRoomCode">------</strong><span id="syncStatus" class="sync-status">Connecting…</span></div>
+        <div class="toolbar-actions">
+          <button id="shareGameBtn" class="secondary-btn" type="button">Share</button>
+          <button id="resetGameBtn" class="danger-btn" type="button" hidden>Reset</button>
+          <button id="leaveGameBtn" class="secondary-btn" type="button">Leave</button>
+        </div>
+      </section>
+
+      <section class="score-wrap card">
+        <div class="score-scroll">
+          <table aria-label="Yahtzee scorecard"><thead id="scoreHead"></thead><tbody id="scoreBody"></tbody></table>
+        </div>
+      </section>
+
+      <section class="legend card">
+        <strong>Scoring</strong>
+        <p>Tap your score cells to enter points. The host can correct anyone's score. Upper bonus and totals calculate automatically.</p>
+      </section>
     </section>
   </main>
+
+  <div id="toast" class="toast" hidden></div>
 
   <dialog id="scoreDialog">
     <form method="dialog" id="scoreForm">
       <div class="dialog-heading">
-        <div>
-          <p class="eyebrow" id="dialogPlayer"></p>
-          <h2 id="dialogCategory">Enter score</h2>
-        </div>
+        <div><p class="eyebrow dark" id="dialogPlayer"></p><h2 id="dialogCategory">Enter score</h2></div>
         <button class="icon-btn" value="cancel" aria-label="Close">×</button>
       </div>
-
       <div id="quickChoices" class="quick-choices" hidden></div>
-
-      <label id="scoreInputWrap">
-        <span>Score</span>
-        <input id="scoreInput" type="number" min="0" inputmode="numeric" autocomplete="off" />
-      </label>
-
+      <label id="scoreInputWrap" class="field"><span>Score</span><input id="scoreInput" type="number" min="0" max="1000" inputmode="numeric" autocomplete="off" /></label>
       <div class="dialog-actions">
         <button id="clearScoreBtn" type="button" class="danger-btn">Clear</button>
         <button value="cancel" class="secondary-btn">Cancel</button>
@@ -68,24 +95,17 @@
     </form>
   </dialog>
 
-  <dialog id="newGameDialog">
+  <dialog id="confirmDialog">
     <form method="dialog">
-      <h2>Start a new game?</h2>
-      <p>This clears every score but keeps the current player names.</p>
+      <h2>Reset all scores?</h2>
+      <p>Every player's scores will be cleared for a new round. Player names stay in the room.</p>
       <div class="dialog-actions">
         <button value="cancel" class="secondary-btn">Cancel</button>
-        <button id="confirmNewGameBtn" value="default" class="danger-btn">Clear scores</button>
+        <button id="confirmResetBtn" value="default" class="danger-btn">Reset scores</button>
       </div>
     </form>
   </dialog>
 
-  <template id="playerHeaderTemplate">
-    <th class="player-head">
-      <input class="player-name" aria-label="Player name" maxlength="18" />
-      <button class="remove-player" type="button" aria-label="Remove player">Remove</button>
-    </th>
-  </template>
-
-  <script src="app.js"></script>
+  <script type="module" src="./app.js"></script>
 </body>
 </html>

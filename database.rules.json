@@ -1,0 +1,42 @@
+{
+  "rules": {
+    "rooms": {
+      "$room": {
+        ".read": "auth != null",
+        ".write": "auth != null && ((!data.exists() && newData.child('hostUid').val() === auth.uid) || (data.exists() && data.child('hostUid').val() === auth.uid))",
+        "hostUid": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 128"
+        },
+        "createdAt": {
+          ".validate": "newData.isNumber() && newData.val() <= now + 60000"
+        },
+        "status": {
+          ".validate": "newData.isString() && (newData.val() === 'lobby' || newData.val() === 'playing')"
+        },
+        "players": {
+          "$uid": {
+            ".write": "auth != null && (auth.uid === $uid || root.child('rooms').child($room).child('hostUid').val() === auth.uid)",
+            ".validate": "newData.hasChildren(['name','joinedAt'])",
+            "name": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 18"
+            },
+            "joinedAt": {
+              ".validate": "newData.isNumber() && newData.val() <= now + 60000"
+            },
+            "scores": {
+              "$category": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000"
+              }
+            },
+            "$other": {
+              ".validate": "$other === 'name' || $other === 'joinedAt' || $other === 'scores'"
+            }
+          }
+        },
+        "$other": {
+          ".validate": "$other === 'hostUid' || $other === 'createdAt' || $other === 'status' || $other === 'players'"
+        }
+      }
+    }
+  }
+}
